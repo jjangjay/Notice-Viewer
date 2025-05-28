@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>강의 자료 알리미</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .course-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 2px solid #333;
+    }
+
+    .course-table td {
+      border: 1px solid #333;
+      padding: 15px;
+      text-align: center;
+      background-color: #f9f9f9;
+      min-height: 60px;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    .course-name {
+      background-color: #e8f4f8;
+      width: 25%;
+      font-weight: bold;
+    }
+
+    .category-header {
+      background-color: #d0d0d0;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .category-header:hover {
+      background-color: #b0b0b0;
+    }
+
+    .notice-header {
+      background-color: #fff2e8;
+      width: 25%;
+    }
+
+    .materials-header {
+      background-color: #f0f8e8;
+      width: 25%;
+    }
+
+    .resources-header {
+      background-color: #f8e8f8;
+      width: 25%;
+    }
+
+    .content-cell {
+      background-color: #f9f9f9;
+    }
+
+    .content-item {
+      display: block;
+      margin: 5px 0;
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+      color: #333;
+    }
+
+    .content-item:hover {
+      background-color: #e0e0e0;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>강의 자료 알리미</h1>
+
+  <table class="course-table" id="courseTable">
+    <!-- 동적으로 생성될 테이블 내용 -->
+  </table>
+</div>
+
+<script>
+  // 과목 및 자료 데이터
+  const courseData = [
+    {
+      id: 1,
+      name: "데이터베이스",
+      notices: [
+        { id: 101, title: "공지사항 제목1" },
+        { id: 102, title: "공지사항 제목2" },
+        { id: 103, title: "공지사항 제목3" }
+      ],
+      materials: [
+        { id: 201, title: "과목자료실 제목1" },
+        { id: 202, title: "과목자료실 제목2" },
+        { id: 203, title: "과목자료실 제목3" }
+      ],
+      resources: [
+        { id: 301, title: "학습자료 제목1" },
+        { id: 302, title: "학습자료 제목2" },
+        { id: 303, title: "학습자료 제목3" }
+      ]
+    },
+    {
+      id: 2,
+      name: "웹프로그래밍",
+      notices: [
+        { id: 104, title: "공지사항 제목1" },
+        { id: 105, title: "공지사항 제목2" },
+        { id: 106, title: "공지사항 제목3" }
+      ],
+      materials: [
+        { id: 204, title: "과목자료실 제목1" },
+        { id: 205, title: "과목자료실 제목2" },
+        { id: 206, title: "과목자료실 제목3" }
+      ],
+      resources: [
+        { id: 304, title: "학습자료 제목1" },
+        { id: 305, title: "학습자료 제목2" },
+        { id: 306, title: "학습자료 제목3" }
+      ]
+    },
+    {
+      id: 3,
+      name: "소프트웨어공학",
+      notices: [
+        { id: 107, title: "공지사항 제목1" },
+        { id: 108, title: "공지사항 제목2" },
+        { id: 109, title: "공지사항 제목3" }
+      ],
+      materials: [
+        { id: 207, title: "과목자료실 제목1" },
+        { id: 208, title: "과목자료실 제목2" },
+        { id: 209, title: "과목자료실 제목3" }
+      ],
+      resources: [
+        { id: 307, title: "학습자료 제목1" },
+        { id: 308, title: "학습자료 제목2" },
+        { id: 309, title: "학습자료 제목3" }
+      ]
+    }
+  ];
+
+  // 테이블 헤더 생성
+  function createTableHeader() {
+    return `
+                <tr>
+                    <td class="category-header course-name">과목명</td>
+                    <td class="category-header notice-header" onclick="goToNoticeList()">공지사항</td>
+                    <td class="category-header materials-header" onclick="goToMaterialsList()">과목자료실</td>
+                    <td class="category-header resources-header" onclick="goToResourcesList()">학습자료</td>
+                </tr>
+            `;
+  }
+
+  // 테이블 행 생성
+  function createCourseRow(course) {
+    return `
+                <tr>
+                    <td class="course-name">${course.name}</td>
+                    <td class="content-cell">
+                        ${course.notices.map(notice =>
+            `<span class="content-item" onclick="goToNoticeDetail(${notice.id}, '${course.name}')">${notice.title}</span>`
+    ).join('')}
+                    </td>
+                    <td class="content-cell">
+                        ${course.materials.map(material =>
+            `<span class="content-item" onclick="goToMaterialDetail(${material.id}, '${course.name}')">${material.title}</span>`
+    ).join('')}
+                    </td>
+                    <td class="content-cell">
+                        ${course.resources.map(resource =>
+            `<span class="content-item" onclick="goToResourceDetail(${resource.id}, '${course.name}')">${resource.title}</span>`
+    ).join('')}
+                    </td>
+                </tr>
+            `;
+  }
+
+  // 테이블 동적 생성
+  function generateCourseTable() {
+    const tableBody = document.getElementById('courseTable');
+    let tableHTML = createTableHeader();
+
+    courseData.forEach(course => {
+      tableHTML += createCourseRow(course);
+    });
+
+    tableBody.innerHTML = tableHTML;
+  }
+
+  // 헤더 클릭 시 모아보기 페이지로 이동[2][3]
+  function goToNoticeList() {
+    // 모든 과목의 공지사항을 모아서 보는 페이지로 이동
+    location.href = "notice_list.html";
+  }
+
+  function goToMaterialsList() {
+    // 모든 과목의 과목자료실을 모아서 보는 페이지로 이동
+    location.href = "materials_list.html";
+  }
+
+  function goToResourcesList() {
+    // 모든 과목의 학습자료를 모아서 보는 페이지로 이동
+    location.href = "resources_list.html";
+  }
+
+  // 개별 항목 클릭 시 상세 페이지로 이동[2][3]
+  function goToNoticeDetail(noticeId, courseName) {
+    // 특정 공지사항의 상세 페이지로 이동
+    location.href = `notice_detail.html?id=${noticeId}&course=${encodeURIComponent(courseName)}`;
+  }
+
+  function goToMaterialDetail(materialId, courseName) {
+    // 특정 과목자료실 항목의 상세 페이지로 이동
+    location.href = `material_detail.html?id=${materialId}&course=${encodeURIComponent(courseName)}`;
+  }
+
+  function goToResourceDetail(resourceId, courseName) {
+    // 특정 학습자료의 상세 페이지로 이동
+    location.href = `resource_detail.html?id=${resourceId}&course=${encodeURIComponent(courseName)}`;
+  }
+
+  // 초기 테이블 생성
+  document.addEventListener('DOMContentLoaded', function() {
+    generateCourseTable();
+  });
+</script>
+</body>
+</html>
