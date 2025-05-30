@@ -1,6 +1,7 @@
 package jjangjay.edelive.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,14 +13,15 @@ import java.util.List;
 @RestController
 public class TestRestController {
 
-    @RequestMapping(value="/testValue", method = RequestMethod.GET)
+//    @RequestMapping(value="/testValue", method = RequestMethod.GET)
+    @GetMapping("/testValue")
     public String getTestValue(){
         String TestValue = "레스트컨트롤러 테스트";
         return TestValue;
     }
 
     @RequestMapping("/test")
-    public ModelAndView test() throws Exception{
+    public ModelAndView test() {
         ModelAndView mav = new ModelAndView("test");
         mav.addObject("name", "goddaehee");
 
