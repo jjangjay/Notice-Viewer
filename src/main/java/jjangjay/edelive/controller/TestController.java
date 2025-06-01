@@ -1,25 +1,32 @@
-/*
 package jjangjay.edelive.controller;
 
+import jjangjay.edelive.model.TestVo;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class TestController {
-    @RequestMapping(value = "/home")
-    public String home(){
-        return "index.html";
+    @RequestMapping("/thymeleafTest")
+    public String thymeleafTest(Model model) {
+        TestVo testModel = new TestVo("qwe", "ㅇㅅㅇ") ;
+        model.addAttribute("testModel", testModel);
+        return "thymeleaf/thymeleafTest";
     }
-
-    @ResponseBody
-    @RequestMapping("/valueTest")
-    public String valueTest(){
-        String value = "테스트 String";
-        return value;
-    }
+//    @RequestMapping(value = "/home")
+//    public String home(){
+//        return "index.html";
+//    }
+//
+//    @ResponseBody
+//    @RequestMapping("/valueTest")
+//    public String valueTest(){
+//        String value = "테스트 String";
+//        return value;
+//    }
 }
-
+/*
 <!DOCTYPE html>
 <html lang="ko">
 <head>
