@@ -1,6 +1,8 @@
 package jjangjay.edelive.controller;
-
+/*
+import jjangjay.edelive.crawler.CrawlingUtils;
 import jjangjay.edelive.model.TestVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +15,21 @@ public class TestController {
         TestVo testModel = new TestVo("qwe", "ㅇㅅㅇ") ;
         model.addAttribute("testModel", testModel);
         return "thymeleaf/thymeleafTest";
+    }
+
+    @Autowired
+    private CrawlingUtils crawlingUtils;
+
+    // 크롤링 테스트 메서드 추가
+    @ResponseBody
+    @RequestMapping("/crawling-test")
+    public String crawlingTest() {
+        try {
+            crawlingUtils.testCrawling();
+            return "크롤링 테스트 완료! 콘솔을 확인해주세요.";
+        } catch (Exception e) {
+            return "크롤링 에러: " + e.getMessage();
+        }
     }
 //    @RequestMapping(value = "/home")
 //    public String home(){

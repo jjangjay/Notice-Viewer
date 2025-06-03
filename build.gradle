@@ -43,7 +43,7 @@ dependencies {
 	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.seleniumhq.selenium:selenium-java'
+	implementation 'org.jsoup:jsoup:1.17.2'
 }
 
 tasks.named('test') {
