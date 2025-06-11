@@ -4,6 +4,8 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.util.HashMap;
+
 public class EdelweisCrawler {
     private static final String LOGIN_URL = "https://hive.cju.ac.kr/security/login";
     private static final String MYPAGE_URL = "https://hive.cju.ac.kr/usr/member/stu/dash/detail.do";
@@ -39,13 +41,9 @@ public class EdelweisCrawler {
         return JSESSIONID;
     }
 
-    private record LoginStatus(boolean status, String message) {}
     public static LoginStatus checkLoginStatus(String JSESSIONID) throws Exception {
         // 마이페이지 접근을 통해 로그인 상태 확인
-        Connection.Response checkLogin = Jsoup.connect(MYPAGE_URL)
-                .cookie("JSESSIONID", JSESSIONID)
-                .execute();
-
+        Connection.Response checkLogin = getData(MYPAGE_URL, JSESSIONID);
         if (checkLogin.statusCode() != 200) {
             return new LoginStatus(false, "로그인 상태 확인 실패. JSESSIONID가 유효하지 않습니다.");
         }
@@ -57,11 +55,21 @@ public class EdelweisCrawler {
         return new LoginStatus(true, "");
     }
 
-    public static String getData(String edelweisUrl, String JSESSIONID) throws Exception {
-        Document doc = Jsoup.connect(edelweisUrl)
-                .cookie("JSESSIONID", JSESSIONID)
-                .get();
+    public static String getClassList(String JSESSIONID) throws Exception {
+        Connection.Response response = getData(MYPAGE_URL, JSESSIONID);
 
-        return doc.html();
+        if (response.statusCode() != 200) {
+            throw new Exception("수업 목록을 가져오는 데 실패했습니다. JSESSIONID가 유효하지 않습니다.");
+        }
+
+        return response.body();
     }
+
+    public static Connection.Response getData(String edelweisUrl, String JSESSIONID) throws Exception {
+        return Jsoup.connect(edelweisUrl)
+                .cookie("JSESSIONID", JSESSIONID)
+                .execute();
+    }
+
+    public record LoginStatus(boolean status, String message) {}
 }
