@@ -4,7 +4,6 @@ package jjangjay.edelive.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jjangjay.edelive.crawler.EdelweisCrawler;
-import jjangjay.edelive.crawler.EdelweisCrawler였던것;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 

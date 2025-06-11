@@ -1,3 +1,4 @@
+/*
 package jjangjay.edelive.crawler;
 
 import org.springframework.stereotype.Component;
@@ -32,3 +33,4 @@ public class EdelweisCrawler였던것 {
         return EdelweisCrawler.login(userId, userPw);
     }
 }
+*/

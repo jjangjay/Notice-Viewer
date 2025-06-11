@@ -51,7 +51,7 @@ public class EdelweisCrawler {
         }
 
         Document myPageParsed = checkLogin.parse();
-        if (!myPageParsed.html().contains("로그아웃")) {
+        if (!(myPageParsed.html().contains("로그아웃") && myPageParsed.html().contains("학기선택") && myPageParsed.html().contains("포트폴리오 작성"))) {
             return new LoginStatus(false, "로그인 상태가 아닙니다. JSESSIONID가 유효하지 않습니다.");
         }
         return new LoginStatus(true, "");
