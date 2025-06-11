@@ -15,5 +15,5 @@ public class UrlController {
     @GetMapping("/main")
     public String mainPage() {
         return "main.html";
-    }
+}
 }
