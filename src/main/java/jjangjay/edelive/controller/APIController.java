@@ -32,7 +32,11 @@ public class APIController {
 
         try {
             ArrayList<jjangjay.edelive.crawler.EdelweisCrawler.Class> classList = EdelweisCrawler.getClassList(JSESSIONID);
-            Connection.Response classRoom = EdelweisCrawler.getClassroom(JSESSIONID, classList.get(0).courseActiveSeq(), classList.get(0).courseApplySeq());
+            Connection.Response classRoom = EdelweisCrawler.getClassroom(JSESSIONID, classList.get(2));
+            ArrayList<EdelweisCrawler.Board> boardList = EdelweisCrawler.getBoardList(classRoom.parse());
+            EdelweisCrawler.Board board = boardList.get(0);
+//            public static ArrayList<EdelweisCrawler.Post> getPostList(String edelweisUrl, String JSESSIONID, String srchBoardSeq, EdelweisCrawler.Class classItem) throws Exception {
+            EdelweisCrawler.Post postList = EdelweisCrawler.getPostList(board.url(), JSESSIONID, board.articleId(), classList.get(2)).get(0);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,12 +79,4 @@ public class APIController {
         }
         return null;
     }
-//
-//    private Map<String, Cookie> cookieMap(@Nullable Cookie[] cookies) {
-//        if (cookies == null) return Collections.emptyMap();
-//
-//        HashMap<String, Cookie> cookieMap = new HashMap<>(cookies.length);
-//        Arrays.asList(cookies).forEach(cookie -> cookieMap.put(cookie.getName(), cookie));
-//        return cookieMap;
-//    }
 }
