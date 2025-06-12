@@ -2,23 +2,37 @@ package jjangjay.edelive.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import jjangjay.edelive.crawler.EdelweisCrawler;
+import org.jsoup.Connection;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -30,152 +44,273 @@ class APIControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // EdelweisCrawler의 static 메소드를 직접 호출하므로, MockBean으로 직접 주입하기 어렵습니다.
-    // 테스트의 안정성을 위해 EdelweisCrawler의 동작을 모킹하는 것이 좋습니다.
-    // 여기서는 간단화를 위해 실제 크롤러를 호출한다고 가정하지만, 이는 외부 의존성으로 인해 테스트가 불안정해질 수 있습니다.
-    // 실제 프로젝트에서는 PowerMockito 또는 Mockito 5+의 MockedStatic을 사용하거나,
-    // EdelweisCrawler를 인터페이스와 구현체로 분리하여 MockBean으로 주입하는 것을 고려하세요.
+    // 실제와 유사한 JSESSIONID 형식으로 변경
+    private static final String MOCK_JSESSIONID = "58B39F221041EC437281DCB05ECFF789";
 
-    // 임시로 EdelweisCrawler의 일부 동작을 모킹하기 위한 설정 (실제로는 더 정교한 모킹 필요)
-    // @MockBean // 실제 static 메소드 모킹은 @MockBean으로 간단히 되지 않습니다.
-    // private EdelweisCrawler edelweisCrawler; // 이 방식은 static 메소드에 적용되지 않음
-
-    private String mockJSessionId = "mockTestSessionId12345";
+    // 테스트용 사용자 인증 정보
+    private static final String TEST_USER_ID = "testuser123";
+    private static final String TEST_USER_PASSWORD = "Password123!";
 
     @Nested
-    @DisplayName("/api/login 테스트")
-    class LoginTests {
+    @DisplayName("로그인 API 테스트")
+    class LoginApiTest {
+        private MockedStatic<EdelweisCrawler> mockedCrawler;
 
-        @Test
-        @DisplayName("성공적인 로그인")
-        void login_success() throws Exception {
-            Map<String, Object> loginParams = new HashMap<>();
-            loginParams.put("userId", "testUser");
-            loginParams.put("userPw", "testPassword");
+        @BeforeEach
+        void setUp() {
+            // 테스트 시작 전 EdelweisCrawler의 static 메소드를 모킹
+            mockedCrawler = mockStatic(EdelweisCrawler.class);
+        }
 
-            // EdelweisCrawler.login이 성공적으로 JSESSIONID를 반환한다고 가정
-            // 실제로는 이 부분을 모킹해야 합니다.
-            // 예: when(EdelweisCrawler.login(anyString(), anyString())).thenReturn(mockJSessionId);
-            // 위와 같이 하려면 MockedStatic 사용 필요
-
-            mockMvc.perform(post("/api/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(loginParams)))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.status").value(true))
-                    .andExpect(jsonPath("$.message").value("로그인 성공"))
-                    .andExpect(cookie().exists("JSESSIONID"));
-                    // 실제 EdelweisCrawler.login이 호출되므로, 해당 메소드가 null을 반환하면 실패합니다.
+        @AfterEach
+        void tearDown() {
+            // 테스트 종료 후 모킹 해제
+            mockedCrawler.close();
         }
 
         @Test
-        @DisplayName("로그인 실패 - JSESSIONID 없음")
-        void login_failure_no_jsessionid() throws Exception {
+        @DisplayName("성공적인 로그인 테스트")
+        void loginSuccess() throws Exception {
+            // Given
+            Map<String, Object> loginParams = new HashMap<>();
+            loginParams.put("userId", TEST_USER_ID);
+            loginParams.put("userPw", TEST_USER_PASSWORD);
+
+            // login() 메소드가 유효한 JSESSIONID를 반환하도록 모킹
+                    .thenReturn(MOCK_JSESSIONID);
+
+            // checkLoginStatus가 성공 상태를 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.checkLoginStatus(anyString()))
+                    .thenReturn(new EdelweisCrawler.LoginStatus(true, "로그인 성공"));
+
+            // When & Then
+            mockMvc.perform(post("/api/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status", is(true)))
+                    .andExpect(jsonPath("$.message", is("로그인 성공")))
+                    .andExpect(cookie().exists("JSESSIONID"))
+                    .andExpect(cookie().value("JSESSIONID", MOCK_JSESSIONID));
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - JSESSIONID 반환 없음")
+        void loginFailureNoJsessionId() throws Exception {
+            // Given
             Map<String, Object> loginParams = new HashMap<>();
             loginParams.put("userId", "wrongUser");
             loginParams.put("userPw", "wrongPassword");
 
-            // EdelweisCrawler.login이 null을 반환한다고 가정 (모킹 필요)
-            // 예: when(EdelweisCrawler.login(anyString(), anyString())).thenReturn(null);
+            // login() 메소드가 null을 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.login(anyString(), anyString()))
+                    .thenReturn(null);
 
+            // When & Then
             mockMvc.perform(post("/api/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(false))
-                    .andExpect(jsonPath("$.message").value("로그인 실패: JSESSIONID가 비어있습니다."));
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("로그인 실패: JSESSIONID가 비어있습니다.")));
         }
 
         @Test
-        @DisplayName("로그인 실패 - 아이디 또는 비밀번호 누락")
-        void login_failure_missing_credentials() throws Exception {
+        @DisplayName("로그인 실패 - 빈 JSESSIONID 반환")
+        void loginFailureEmptyJsessionId() throws Exception {
+            // Given
+            Map<String, Object> loginParams = new HashMap<>();
+            loginParams.put("userId", "wrongUser");
+            loginParams.put("userPw", "wrongPassword");
+
+            // login() 메소드가 빈 문자열을 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.login(anyString(), anyString()))
+                    .thenReturn("");
+
+            // When & Then
+            mockMvc.perform(post("/api/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("로그인 실패: JSESSIONID가 비어있습니다.")));
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 아이디 누락")
+        void loginFailureMissingUserId() throws Exception {
+            // Given
+            Map<String, Object> loginParams = new HashMap<>();
+            loginParams.put("userPw", "testPassword");
+            // userId 누락
+
+            // When & Then
+            mockMvc.perform(post("/api/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("아이디와 비밀번호를 모두 입력해주세요.")));
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 비밀번호 누락")
+        void loginFailureMissingPassword() throws Exception {
+            // Given
             Map<String, Object> loginParams = new HashMap<>();
             loginParams.put("userId", "testUser");
             // userPw 누락
 
+            // When & Then
             mockMvc.perform(post("/api/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(false))
-                    .andExpect(jsonPath("$.message").value("아이디와 비밀번호를 모두 입력해주세요."));
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("아이디와 비밀번호를 모두 입력해주세요.")));
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 빈 파라미터")
+        void loginFailureEmptyParameters() throws Exception {
+            // Given
+            Map<String, Object> loginParams = new HashMap<>();
+            loginParams.put("userId", "");
+            loginParams.put("userPw", "");
+
+            // When & Then
+            mockMvc.perform(post("/api/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginParams)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("아이디와 비밀번호를 모두 입력해주세요.")));
         }
     }
 
     @Nested
-    @DisplayName("/api/data 테스트")
-    class DataTests {
-
+    @DisplayName("데이터 API 테스트")
+    class DataApiTest {
+        private MockedStatic<EdelweisCrawler> mockedCrawler;
         private Cookie jsessionidCookie;
 
         @BeforeEach
         void setUp() {
-            // 이 테스트에서는 실제 로그인을 수행하지 않고, 유효한 쿠키가 있다고 가정합니다.
-            // 더 나은 방법은 @BeforeEach에서 /api/login을 호출하여 실제 쿠키를 얻는 것입니다.
-            // 하지만 이는 login 테스트에 의존하게 됩니다.
-            jsessionidCookie = new Cookie("JSESSIONID", mockJSessionId);
+            // 테스트 시작 전 EdelweisCrawler의 static 메소드를 모킹
+            mockedCrawler = mockStatic(EdelweisCrawler.class);
+            jsessionidCookie = new Cookie("JSESSIONID", MOCK_JSESSIONID);
+        }
 
-            // EdelweisCrawler.checkLoginStatus 및 getClassList 등을 모킹해야 합니다.
-            // 예: when(EdelweisCrawler.checkLoginStatus(mockJSessionId)).thenReturn(new EdelweisCrawler.LoginStatus(true, ""));
-            // 예: when(EdelweisCrawler.getClassList(mockJSessionId)).thenReturn(new ArrayList<>());
-            // ... 기타 필요한 데이터 모킹 ...
+        @AfterEach
+        void tearDown() {
+            // 테스트 종료 후 모킹 해제
+            mockedCrawler.close();
         }
 
         @Test
         @DisplayName("데이터 조회 성공")
-        void get_data_success() throws Exception {
-            // EdelweisCrawler의 메소드들이 성공적으로 데이터를 반환한다고 가정 (모킹 필요)
-            // 이 테스트는 EdelweisCrawler의 실제 구현에 따라 성공/실패가 달라질 수 있습니다.
-            // 안정적인 테스트를 위해서는 EdelweisCrawler의 static 메소드들을 모킹해야 합니다.
+        void getDataSuccess() throws Exception {
+            // Given
+            // checkLoginStatus가 성공 상태를 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.checkLoginStatus(MOCK_JSESSIONID))
+                    .thenReturn(new EdelweisCrawler.LoginStatus(true, ""));
 
-            // 임시로 checkLoginStatus가 true를 반환하도록 설정 (실제로는 MockedStatic 필요)
-            // when(EdelweisCrawler.checkLoginStatus(anyString())).thenReturn(new EdelweisCrawler.LoginStatus(true, ""));
-            // when(EdelweisCrawler.getClassList(anyString())).thenReturn(new ArrayList<EdelweisCrawler.Class>());
-            // ... 기타 등등
+            // getClassList 메소드 모킹
+            ArrayList<EdelweisCrawler.Class> mockClassList = new ArrayList<>();
+            mockClassList.add(new EdelweisCrawler.Class("테스트 클래스", 3.0f, "전공", "12345", "67890", "11121", "LT"));
+            mockedCrawler.when(() -> EdelweisCrawler.getClassList(MOCK_JSESSIONID))
+                    .thenReturn(mockClassList);
 
-            mockMvc.perform(get("/api/data")
-                            .cookie(jsessionidCookie)) // 로그인된 상태를 시뮬레이션
+            // getClassroom 메소드 모킹
+            Connection.Response mockResponse = mock(Connection.Response.class);
+            mockedCrawler.when(() -> EdelweisCrawler.getClassroom(anyString(), any(EdelweisCrawler.Class.class)))
+                    .thenReturn(mockResponse);
+
+            // getBoardList 메소드 모킹
+            ArrayList<EdelweisCrawler.Board> mockBoardList = new ArrayList<>();
+            mockBoardList.add(new EdelweisCrawler.Board("공지사항", "/test/url", "12345", "notice"));
+            mockedCrawler.when(() -> EdelweisCrawler.getBoardList(any()))
+                    .thenReturn(mockBoardList);
+
+            // getPostList 메소드 모킹
+            ArrayList<EdelweisCrawler.Post> mockPostList = new ArrayList<>();
+            mockPostList.add(new EdelweisCrawler.Post("/test/post/url", "테스트 공지", "98765", "작성자", "2023-12-31"));
+            mockedCrawler.when(() -> EdelweisCrawler.getPostList(anyString(), any(EdelweisCrawler.Board.class), any(EdelweisCrawler.Class.class)))
+                    .thenReturn(mockPostList);
+
+            // getPostData 메소드 모킹
+            EdelweisCrawler.PostData mockPostData = new EdelweisCrawler.PostData("테스트 공지", "작성자", "2023-12-31", "일반", 10, "테스트 내용입니다.");
+            mockedCrawler.when(() -> EdelweisCrawler.getPostData(anyString(), anyString(), any(EdelweisCrawler.Class.class), any(EdelweisCrawler.Post.class)))
+                    .thenReturn(mockPostData);
+
+            // When & Then
+            mockMvc.perform(post("/api/data")
+                            .cookie(jsessionidCookie))
+                    .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.status").value(true))
-                    .andExpect(jsonPath("$.message").value("데이터 요청 성공"));
-                    // .andExpect(jsonPath("$.classData").exists()); // 실제 데이터가 있다면
+                    .andExpect(jsonPath("$.status", is(true)))
+                    .andExpect(jsonPath("$.message", is("데이터 요청 성공")))
+                    .andExpect(jsonPath("$.classData").exists());
+            // 테스트 클래스 이름에 공백이 있으면 JSONPath에서 문제가 발생할 수 있으므로 경로 표현식 수정
         }
 
         @Test
-        @DisplayName("데이터 조회 실패 - 로그인되지 않음 (쿠키 없음)")
-        void get_data_failure_not_logged_in() throws Exception {
-            mockMvc.perform(get("/api/data")) // 쿠키 없이 요청
+        @DisplayName("데이터 조회 실패 - 로그인 안됨 (쿠키 없음)")
+        void getDataFailureNotLoggedIn() throws Exception {
+            // Given - 쿠키 없이 요청
+
+            // When & Then
+            mockMvc.perform(post("/api/data"))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(false))
-                    .andExpect(jsonPath("$.message").value("로그인 되어있지 않습니다. 다시 로그인해주세요."));
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("로그인 되어있지 않습니다. 다시 로그인해주세요.")));
         }
 
         @Test
         @DisplayName("데이터 조회 실패 - 로그인 만료")
-        void get_data_failure_session_expired() throws Exception {
-            // EdelweisCrawler.checkLoginStatus가 false를 반환한다고 가정 (모킹 필요)
-            // 예: when(EdelweisCrawler.checkLoginStatus(mockJSessionId)).thenReturn(new EdelweisCrawler.LoginStatus(false, "로그인 만료"));
+        void getDataFailureSessionExpired() throws Exception {
+            // Given
+            // checkLoginStatus가 로그인 만료 상태를 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.checkLoginStatus(MOCK_JSESSIONID))
+                    .thenReturn(new EdelweisCrawler.LoginStatus(false, "로그인 만료"));
 
-            mockMvc.perform(get("/api/data")
+            // When & Then
+            mockMvc.perform(post("/api/data")
                             .cookie(jsessionidCookie))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(false))
-                    .andExpect(jsonPath("$.message").value("로그인이 만료되었습니다. 다시 로그인해주세요."));
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("로그인이 만료되었습니다. 다시 로그인해주세요.")));
         }
 
         @Test
-        @DisplayName("데이터 조회 실패 - 데이터 가져오기 오류")
-        void get_data_failure_data_fetch_error() throws Exception {
-            // EdelweisCrawler.getClassList 등에서 예외가 발생한다고 가정 (모킹 필요)
-            // 예: when(EdelweisCrawler.getClassList(mockJSessionId)).thenThrow(new RuntimeException("Test Exception"));
+        @DisplayName("데이터 조회 실패 - 클래스 목록 가져오기 예외")
+        void getDataFailureClassListException() throws Exception {
+            // Given
+            // checkLoginStatus가 성공 상태를 반환하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.checkLoginStatus(MOCK_JSESSIONID))
+                    .thenReturn(new EdelweisCrawler.LoginStatus(true, ""));
 
-            mockMvc.perform(get("/api/data")
-                            .cookie(jsessionidCookie)) // 로그인된 상태
+            // getClassList에서 예외 발생하도록 모킹
+            mockedCrawler.when(() -> EdelweisCrawler.getClassList(MOCK_JSESSIONID))
+                    .thenThrow(new RuntimeException("테스트 예외"));
+
+            // When & Then
+            mockMvc.perform(post("/api/data")
+                            .cookie(jsessionidCookie))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(false))
-                    .andExpect(jsonPath("$.message").value("클래스 데이터를 가져오는 중 오류가 발생했습니다."));
+                    .andExpect(jsonPath("$.status", is(false)))
+                    .andExpect(jsonPath("$.message", is("클래스 데이터를 가져오는 중 오류가 발생했습니다.")));
         }
     }
 }
