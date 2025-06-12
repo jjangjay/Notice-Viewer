@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jjangjay.edelive.crawler.EdelweisCrawler;
 import org.jsoup.Connection;
 import org.springframework.lang.Nullable;
+import org.springframework.web.bind.annotation.GetMapping; // 추가
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,7 +58,7 @@ public class APIController {
 //        }
 //    }
     
-    @PostMapping("/api/data")
+    @GetMapping("/api/data") // @PostMapping에서 @GetMapping으로 변경
     public String data(HttpServletRequest request, HttpServletResponse response) {
         response.setHeader("Content-Type", "application/json; charset=UTF-8");
 
