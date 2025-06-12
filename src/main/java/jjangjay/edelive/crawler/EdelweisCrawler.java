@@ -42,7 +42,7 @@ public class EdelweisCrawler {
                 throw new Exception(loginStatus.message());
             }
 
-            System.out.println("로그인 성공! JSESSIONID: " + JSESSIONID);
+//             System.out.println("로그인 성공! JSESSIONID: " + JSESSIONID);
 
             return JSESSIONID;
         } catch (Exception e) {
@@ -73,12 +73,12 @@ public class EdelweisCrawler {
     public static ArrayList<Class> getClassList(String JSESSIONID) throws Exception {
         Connection.Response response = getData(MYPAGE_URL, JSESSIONID);
 
-        System.out.println("수업 목록을 가져오는 중...");
+//         System.out.println("수업 목록을 가져오는 중...");
         if (response.statusCode() != 200) {
             throw new Exception("수업 목록을 가져오는 데 실패했습니다. JSESSIONID가 유효하지 않습니다.");
         }
 
-        System.out.println("수업 목록을 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
+//         System.out.println("수업 목록을 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
         Document parsedMyPage = response.parse();
         Elements classLists = parsedMyPage.select("#content > div.capacity > div > div.section.capa_dev.study > div.row > div:nth-child(1) > div.fx_box.sm > table > tbody:nth-child(4) > tr");
         if (classLists.isEmpty()) {
@@ -104,13 +104,13 @@ public class EdelweisCrawler {
             } catch (Exception ignored) {
             }
         }
-        System.out.println("수업 목록을 성공적으로 가져왔습니다. 총 " + classList.size() + "개의 수업이 있습니다.");
+//         System.out.println("수업 목록을 성공적으로 가져왔습니다. 총 " + classList.size() + "개의 수업이 있습니다.");
         for (Class cls : classList) {
-            System.out.println("-수업명: " + cls.className() + ", 학점: " + cls.credit() + ", 유형: " + cls.classType() +
-                    ", 번호: " + cls.classNumber() + ", courseActiveSeq: " + cls.courseActiveSeq() +
-                    ", courseApplySeq: " + cls.courseApplySeq() + ", ltType: " + cls.ltType());
+//             System.out.println("-수업명: " + cls.className() + ", 학점: " + cls.credit() + ", 유형: " + cls.classType() +
+//                    ", 번호: " + cls.classNumber() + ", courseActiveSeq: " + cls.courseActiveSeq() +
+//                    ", courseApplySeq: " + cls.courseApplySeq() + ", ltType: " + cls.ltType());
         }
-        System.out.println();
+//         System.out.println();
 
         return classList;
     }
@@ -123,23 +123,23 @@ public class EdelweisCrawler {
 //        if (response.statusCode() != 200) {
 //            throw new Exception("수업 정보를 가져오는 데 실패했습니다. JSESSIONID가 유효하지 않습니다.");
 //        }
-//        System.out.println("수업 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
+//         System.out.println("수업 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
 //        Document parsedClass = response.parse();
 //
 //        ArrayList<Board> boardList = getBoardList(parsedClass);
-//        System.out.println("수업 게시판 정보를 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
+//         System.out.println("수업 게시판 정보를 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
 //        for (Board board : boardList) {
-//            System.out.println("-게시판 URL: " + board.url() + ", 게시글 ID: " + board.articleId() + ", 유형: " + board.type());
+//             System.out.println("-게시판 URL: " + board.url() + ", 게시글 ID: " + board.articleId() + ", 유형: " + board.type());
 //        }
 //
 ////        getPostList(EDELWEIS_URL + boardList.get(0).url(), JSESSIONID, boardList.get(0).articleId(), courseActiveSeq, courseApplySeq);
 //        for (int i = 0; i < boardList.size(); i++) {
 //            Board board = boardList.get(i);
-//            System.out.println("게시판 " + (i + 1) + "의 게시글 목록을 가져오는 중...");
+//             System.out.println("게시판 " + (i + 1) + "의 게시글 목록을 가져오는 중...");
 //            // 자바는 클래스(record, class, interface 등) 다 대문자로 시작. 변수 이름이 camelCase
 //            ArrayList<Post> postList = getPostList(EDELWEIS_URL + board.url(), JSESSIONID, board.articleId(), courseActiveSeq, courseApplySeq);
-//            System.out.println("게시판 " + (i + 1) + "의 게시글 목록을 성공적으로 가져왔습니다. 총 " + postList.size() + "개의 게시글이 있습니다.");
-//            System.out.println();
+//             System.out.println("게시판 " + (i + 1) + "의 게시글 목록을 성공적으로 가져왔습니다. 총 " + postList.size() + "개의 게시글이 있습니다.");
+//             System.out.println();
 //        }
 
         return response;
@@ -169,18 +169,21 @@ public class EdelweisCrawler {
         }
 
         String className = parsedClass.select("#header > div > div > div > h1").text();
-//        System.out.println("게시판 목록을 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
-        System.out.println(className + "의 게시판 목록을 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
+//         System.out.println("게시판 목록을 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
+//         System.out.println(className + "의 게시판 목록을 성공적으로 가져왔습니다. 총 " + boardList.size() + "개의 게시판이 있습니다.");
         for (Board board : boardList) {
-            System.out.println("-게시판 이름: " + board.boardName() + ", URL: " + board.url() +
-                    ", 게시글 ID: " + board.articleId() + ", 유형: " + board.type());
+//             System.out.println("-게시판 이름: " + board.boardName() + ", URL: " + board.url() +
+//                    ", 게시글 ID: " + board.articleId() + ", 유형: " + board.type());
         }
-        System.out.println();
+//         System.out.println();
 
         return boardList;
     }
 
-    public static ArrayList<Post> getPostList(String edelweisUrl, String JSESSIONID, String srchBoardSeq, Class classItem) throws Exception {
+    public static ArrayList<Post> getPostList(String JSESSIONID, Board board, Class classItem) throws Exception {
+        String edelweisUrl = board.url();
+        String srchBoardSeq = board.articleId();
+
         String courseActiveSeq = classItem.courseActiveSeq();
         String courseApplySeq = classItem.courseApplySeq();
 
@@ -198,7 +201,7 @@ public class EdelweisCrawler {
             throw new Exception("게시판 정보를 가져오는 데 실패했습니다. JSESSIONID가 유효하지 않습니다.");
         }
 
-        System.out.println("게시판 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
+//         System.out.println("게시판 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
         Document parsedBoard = response.parse();
         Elements posts = parsedBoard.select("body > div.page_frame > div.frm_ct > ul > li");
 //        HashMap<String, PostData> postDataList = new HashMap<>();
@@ -216,34 +219,34 @@ public class EdelweisCrawler {
 //            postDataList.put(postItem.bbsSeq, getPost(url, JSESSIONID, srchBoardSeq, courseActiveSeq, courseApplySeq, bbsSeq));
         }
 
-        System.out.println("게시판 정보를 성공적으로 가져왔습니다. 총 " + postList.size() + "개의 게시글이 있습니다.");
+//         System.out.println("게시판 정보를 성공적으로 가져왔습니다. 총 " + postList.size() + "개의 게시글이 있습니다.");
         for (int i = 0; i < postList.size(); i++) {
             Post post = postList.get(i);
-            System.out.println(post);
+//             System.out.println(post);
 //            PostData postData = postDataList.get(post.bbsSeq());
-//            System.out.println(postData);
+//             System.out.println(postData);
         }
 
-        System.out.println();
+//         System.out.println();
         return postList;
     }
 
-    public static PostData getPost(String edelweisUrl, String JSESSIONID, String srchBoardSeq, String courseActiveSeq, String courseApplySeq, String bbsSeq) throws Exception {
-        Connection.Response response = postData(edelweisUrl, JSESSIONID, Map.of(
+    public static PostData getPostData(String JSESSIONID, String srchBoardSeq, Class classItem, Post post) throws Exception {
+        Connection.Response response = postData(post.url(), JSESSIONID, Map.of(
                 "currentPage", "1",
                 "perPage", "1000",
                 "orderby", "0",
                 "srchBoardSeq", srchBoardSeq,
-                "courseActiveSeq", courseActiveSeq,
-                "courseApplySeq", courseApplySeq,
-                "bbsSeq", bbsSeq
+                "courseActiveSeq", classItem.courseActiveSeq(),
+                "courseApplySeq", classItem.courseApplySeq(),
+                "bbsSeq", post.bbsSeq()
         ));
 
         if (response.statusCode() != 200) {
             throw new Exception("게시글 정보를 가져오는 데 실패했습니다. JSESSIONID가 유효하지 않습니다.");
         }
 
-//        System.out.println("게시글 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
+//         System.out.println("게시글 정보를 가져오는 데 성공했습니다. 응답 코드: " + response.statusCode());
         Document parsedPost = response.parse();
 
         String postTitle = parsedPost.select("body > div.page_frame > div.frm_ct > div.col_2 > div > div.c_detail > div.top > h3").text();
@@ -258,7 +261,10 @@ public class EdelweisCrawler {
         String postContent = parsedPost.select("body > div.page_frame > div.frm_ct > div.col_2 > div > div.c_detail > div.con.text_editor").html()
                 .replace("<br>", "").replace("&nbsp;", " ").replaceAll("<[^>]+>", "").replace("\n\n", "\n"); // HTML 태그 제거
 
-        return new PostData(postTitle, postWriter, postDate, postDevision, postViewCount, postContent);
+        PostData postData = new PostData(postTitle, postWriter, postDate, postDevision, postViewCount, postContent);
+//         System.out.println(postData);
+
+        return postData;
     }
 
     public static Connection.Response getData(String edelweisUrl, String JSESSIONID) throws Exception {
@@ -279,5 +285,5 @@ public class EdelweisCrawler {
     public record Class(String className, float credit, String classType, String classNumber, String courseActiveSeq, String courseApplySeq, String ltType) {}
     public record Board(String boardName, String url, String articleId, String type) {}
     public record Post(String url, String title, String bbsSeq, String writer, String date) {}
-    public record PostData(String title, String writer, String date, String devision, Integer viewCount, String content) {}
+    public record PostData(String title, String writer, String date, String division, Integer viewCount, String content) {}
 }
