@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강의 공지사항 - Notice Viewer</title>
+    <style>
+        html {
+            /* 메인 화면 스크롤바 숨기기 (html) */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;     /* Firefox */
+        }
+        html::-webkit-scrollbar { /* Chrome, Safari, Opera */
+            display: none;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            /* 메인 화면 스크롤바 숨기기 */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* 메인 화면 스크롤바 숨기기 (Chrome, Safari, Opera) */
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .course-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        .course-title {
+            font-size: 1.8em;
+            color: #3498db;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        .board-section {
+            margin-bottom: 20px;
+            padding-left: 15px;
+        }
+        .board-title {
+            font-size: 1.3em;
+            color: #2980b9;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .board-title:hover {
+            color: #1abc9c;
+        }
+        .post-list {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        .post-list li {
+            margin-bottom: 8px;
+        }
+        .post-title {
+            color: #555;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .post-title:hover {
+            color: #e74c3c;
+        }
+        .post-meta {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-left: 10px;
+        }
+        #post-content-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 70%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+        }
+        #modal-post-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        #modal-post-meta {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        #modal-post-body {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #444;
+            white-space: pre-wrap; /* Preserve line breaks and spaces */
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .loading-message, .error-message {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <h1>강의 공지사항</h1>
+        <div id="courses-container">
+            <p class="loading-message">데이터를 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+    <div id="post-content-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-post-title"></h2>
+            <p id="modal-post-meta"></p>
+            <div id="modal-post-body"></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = {}; // To store all fetched data
+
+        document.addEventListener('DOMContentLoaded', fetchData);
+
+        async function fetchData() {
+            const coursesContainer = document.getElementById('courses-container');
+            try {
+                const response = await fetch('/api/data');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.status && data.classData) {
+                    allData = data.classData; // Store for later use
+                    displayCourses(allData, true); // Initially display limited posts
+                } else {
+                    coursesContainer.innerHTML = `<p class="error-message">데이터를 불러오는데 실패했습니다: ${data.message || '알 수 없는 오류'}</p>`;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                coursesContainer.innerHTML = '<p class="error-message">데이터를 불러오는 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요.</p>';
+            }
+        }
+
+        function displayCourses(classData, limitPosts) {
+            const coursesContainer = document.getElementById('courses-container');
+            coursesContainer.innerHTML = ''; // Clear previous content or loading message
+
+            if (Object.keys(classData).length === 0) {
+                coursesContainer.innerHTML = '<p class="loading-message">표시할 강의 데이터가 없습니다.</p>';
+                return;
+            }
+
+            for (const className in classData) {
+                const course = classData[className];
+                const courseSection = document.createElement('div');
+                courseSection.className = 'course-section';
+
+                const courseTitle = document.createElement('h2');
+                courseTitle.className = 'course-title';
+                courseTitle.textContent = className;
+                courseSection.appendChild(courseTitle);
+
+                for (const boardName in course) {
+                    const posts = course[boardName];
+                    const boardSection = document.createElement('div');
+                    boardSection.className = 'board-section';
+
+                    const boardTitle = document.createElement('h3');
+                    boardTitle.className = 'board-title';
+                    boardTitle.textContent = boardName;
+                    // Add event listener to board title
+                    boardTitle.addEventListener('click', () => displayAllPostsForBoard(className, boardName));
+                    boardSection.appendChild(boardTitle);
+
+                    const postList = document.createElement('ul');
+                    postList.className = 'post-list';
+
+                    const postsToDisplay = limitPosts ? posts.slice(0, 5) : posts;
+
+                    if (postsToDisplay.length === 0) {
+                        const noPostItem = document.createElement('li');
+                        noPostItem.textContent = '게시글이 없습니다.';
+                        postList.appendChild(noPostItem);
+                    } else {
+                        postsToDisplay.forEach(post => {
+                            const listItem = document.createElement('li');
+                            const postLink = document.createElement('a');
+                            postLink.className = 'post-title';
+                            postLink.textContent = post.title;
+                            // Add event listener to post title
+                            postLink.addEventListener('click', () => showPostContent(post.postData));
+
+                            const postMeta = document.createElement('span');
+                            postMeta.className = 'post-meta';
+                            postMeta.textContent = `(${post.date} | ${post.writer})`;
+
+                            listItem.appendChild(postLink);
+                            listItem.appendChild(postMeta);
+                            postList.appendChild(listItem);
+                        });
+                    }
+                    boardSection.appendChild(postList);
+                    courseSection.appendChild(boardSection);
+                }
+                coursesContainer.appendChild(courseSection);
+            }
+        }
+
+        function showPostContent(postData) {
+            document.getElementById('modal-post-title').textContent = postData.title;
+            let metaInfo = `작성자: ${postData.writer} | 날짜: ${postData.date}`;
+            if (postData.division) {
+                metaInfo += ` | 구분: ${postData.division}`;
+            }
+            if (postData.viewCount !== null) {
+                metaInfo += ` | 조회수: ${postData.viewCount}`;
+            }
+            document.getElementById('modal-post-meta').textContent = metaInfo;
+            document.getElementById('modal-post-body').innerHTML = postData.content; // Use innerHTML if content is HTML
+
+            document.getElementById('post-content-modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('post-content-modal').style.display = 'none';
+        }
+
+        function displayAllPostsForBoard(targetClassName, targetBoardName) {
+            const coursesContainer = document.getElementById('courses-container');
+            coursesContainer.innerHTML = ''; // Clear current view
+
+            const course = allData[targetClassName];
+            if (!course || !course[targetBoardName]) {
+                coursesContainer.innerHTML = '<p class="error-message">해당 게시판 정보를 찾을 수 없습니다.</p>';
+                return;
+            }
+
+            const courseSection = document.createElement('div');
+            courseSection.className = 'course-section';
+
+            const courseTitle = document.createElement('h2');
+            courseTitle.className = 'course-title';
+            courseTitle.textContent = `${targetClassName} - ${targetBoardName}`;
+            courseSection.appendChild(courseTitle);
+
+            const backButton = document.createElement('button');
+            backButton.textContent = '전체 강의 목록으로 돌아가기';
+            backButton.style.marginBottom = '15px';
+            backButton.addEventListener('click', () => displayCourses(allData, true)); // Go back to initial view
+            courseSection.appendChild(backButton);
+
+
+            const boardSection = document.createElement('div');
+            boardSection.className = 'board-section';
+
+            // No need for board title here as we are already in the board view
+            // const boardTitle = document.createElement('h3');
+            // boardTitle.className = 'board-title';
+            // boardTitle.textContent = targetBoardName;
+            // boardSection.appendChild(boardTitle);
+
+            const posts = course[targetBoardName];
+            const postList = document.createElement('ul');
+            postList.className = 'post-list';
+
+            if (posts.length === 0) {
+                const noPostItem = document.createElement('li');
+                noPostItem.textContent = '게시글이 없습니다.';
+                postList.appendChild(noPostItem);
+            } else {
+                posts.forEach(post => {
+                    const listItem = document.createElement('li');
+                    const postLink = document.createElement('a');
+                    postLink.className = 'post-title';
+                    postLink.textContent = post.title;
+                    postLink.addEventListener('click', () => showPostContent(post.postData));
+
+                    const postMeta = document.createElement('span');
+                    postMeta.className = 'post-meta';
+                    postMeta.textContent = `(${post.date} | ${post.writer})`;
+
+                    listItem.appendChild(postLink);
+                    listItem.appendChild(postMeta);
+                    postList.appendChild(listItem);
+                });
+            }
+            boardSection.appendChild(postList);
+            courseSection.appendChild(boardSection);
+            coursesContainer.appendChild(courseSection);
+        }
+
+        // Close modal if user clicks outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('post-content-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
